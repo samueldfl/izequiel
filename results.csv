@@ -1,0 +1,10 @@
+Amostra,Metodo,Ocorrencias,Tempo(ms)
+SerialCPU,DonQuixote-388208.txt,1,196765200
+ParallelCPU,DonQuixote-388208.txt,1,136448100
+ParallelGPU,DonQuixote-388208.txt,1,293479300
+SerialCPU,Dracula-165307.txt,66,19831200
+ParallelCPU,Dracula-165307.txt,66,16282600
+ParallelGPU,Dracula-165307.txt,119,130553600
+SerialCPU,MobyDick-217452.txt,77,29502400
+ParallelCPU,MobyDick-217452.txt,77,11541700
+ParallelGPU,MobyDick-217452.txt,134,106869400
