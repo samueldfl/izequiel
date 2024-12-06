@@ -16,16 +16,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jocl.*;
 import static org.jocl.CL.*;
 
 public class Main {
     private static final int NUM_THREADS = 4;
-
-    private static final String TARGET_WORD = "word";
-
-    private static final String OUTPUT_PATH = "results.csv";
+    private static final String TARGET_WORD = "and";
+    private static final String OUTPUT_PATH = "./resources/results.csv";
 
     private static final List<File> FILES = Arrays.asList(
             new File("resources/DonQuixote-388208.txt"),
@@ -33,81 +33,102 @@ public class Main {
             new File("resources/MobyDick-217452.txt"));
 
     public static void main(String[] args) {
-        List<String[]> results = new ArrayList<>();
+        List<List<String>> results = new ArrayList<>();
 
         for (File file : FILES) {
-            final List<String[]> resultSerial = serialCPU(file, TARGET_WORD);
-            results.addAll(resultSerial);
+            final List<String> resultSerial = serialCPU(file, TARGET_WORD);
+            results.add(resultSerial);
 
-            final List<String[]> resultParallelCpu = paralellCPU(file, TARGET_WORD, NUM_THREADS);
-            results.addAll(resultParallelCpu);
+            final List<String> resultParallelCpu = parallelCPU(file, TARGET_WORD, NUM_THREADS);
+            results.add(resultParallelCpu);
 
-            final List<String[]> resultParallelGpu = parallelGPU(file, TARGET_WORD);
-            results.addAll(resultParallelGpu);
+            final List<String> resultParallelGpu = parallelGPU(file, TARGET_WORD);
+            results.add(resultParallelGpu);
         }
 
-        writeResultsToCSV(OUTPUT_PATH, results);
+        results.forEach(result -> {
+            String method = result.get(0);
+            String occurrences = result.get(2);
+            String duration = result.get(3);
+            System.out.printf("%s: %s ocorrências em %s ms%n", method, occurrences, duration);
+        });
+
+        resultsToCSV(OUTPUT_PATH, results);
     }
 
-    private static List<String[]> serialCPU(final File file, final String target) {
-        final List<String[]> result = new ArrayList<>();
+    private static List<String> serialCPU(final File file, final String target) {
+        final List<String> result = new ArrayList<>();
 
-        final long startTime = System.nanoTime();
+        final long startTime = System.currentTimeMillis();
         final long countSerial = countWordSerialCPU(file, target);
-        final long endTime = System.nanoTime();
-        result.add(new String[] { "SerialCPU", file.getName(), String.valueOf(countSerial),
-                String.valueOf(endTime - startTime) });
+        final long endTime = System.currentTimeMillis();
+        final long durationInMs = (endTime - startTime);
+
+        result.add("SerialCPU");
+        result.add(file.getName());
+        result.add(String.valueOf(countSerial));
+        result.add(String.valueOf(durationInMs));
 
         return result;
     }
 
-    private static List<String[]> paralellCPU(final File file, String target, final int numThreads) {
-        final List<String[]> result = new ArrayList<>();
+    private static List<String> parallelCPU(final File file, String target, final int numThreads) {
+        final List<String> result = new ArrayList<>();
 
-        final long startTime = System.nanoTime();
+        final long startTime = System.currentTimeMillis();
         final long countWords = countWordParallelCPU(file, target, numThreads);
-        final long endTime = System.nanoTime();
-        result.add(new String[] { "ParallelCPU", file.getName(), String.valueOf(countWords),
-                String.valueOf(endTime - startTime) });
+        final long endTime = System.currentTimeMillis();
+        final long durationInMs = (endTime - startTime);
+
+        result.add("ParallelCPU");
+        result.add(file.getName());
+        result.add(String.valueOf(countWords));
+        result.add(String.valueOf(durationInMs));
 
         return result;
     }
 
-    private static List<String[]> parallelGPU(final File file, final String target) {
-        final List<String[]> result = new ArrayList<>();
+    private static List<String> parallelGPU(final File file, final String target) {
+        final List<String> result = new ArrayList<>();
 
-        final long startTime = System.nanoTime();
+        final long startTime = System.currentTimeMillis();
         final int countParallelGPU = countWordParallelGPU(file.getPath(), target);
-        final long endTime = System.nanoTime();
-        result.add(new String[] { "ParallelGPU", file.getName(), String.valueOf(countParallelGPU),
-                String.valueOf(endTime - startTime) });
+        final long endTime = System.currentTimeMillis();
+        final long durationInMs = (endTime - startTime);
+
+        result.add("ParallelGPU");
+        result.add(file.getName());
+        result.add(String.valueOf(countParallelGPU));
+        result.add(String.valueOf(durationInMs));
 
         return result;
     }
 
     private static long countWordSerialCPU(final File file, final String target) {
-        long count = 0;
+        long occur = 0;
+
+        final Pattern p = Pattern.compile("\\b(" + Pattern.quote(target) + ")\\b", Pattern.CASE_INSENSITIVE);
 
         try (final BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                final String[] words = line.toLowerCase().split("\\W+");
-                for (final String word : words) {
-                    if (word.equals(target.toLowerCase())) {
-                        count++;
-                    }
+                Matcher m = p.matcher(line);
+                while (m.find()) {
+                    occur++;
                 }
             }
         } catch (final IOException e) {
             System.err.println("Erro ao processar o arquivo: " + e.getMessage());
         }
 
-        return count;
+        return occur;
     }
 
     private static long countWordParallelCPU(final File file, final String target, final int numThreads) {
         final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        long totalOccurrences = 0;
+        long occur = 0;
+
+        final Pattern p = Pattern.compile("\\b(" + Pattern.quote(target) + ")\\b", Pattern.CASE_INSENSITIVE);
 
         try (final BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -115,13 +136,11 @@ public class Main {
 
             while ((line = reader.readLine()) != null) {
                 final String currentLine = line.toLowerCase();
-                final Future<Integer> future = executor.submit(() -> {
+                Future<Integer> future = executor.submit(() -> {
                     int count = 0;
-                    final String[] words = currentLine.split("\\W+");
-                    for (final String word : words) {
-                        if (word.equals(target.toLowerCase())) {
-                            count++;
-                        }
+                    Matcher m = p.matcher(currentLine);
+                    while (m.find()) {
+                        count++;
                     }
                     return count;
                 });
@@ -130,7 +149,7 @@ public class Main {
 
             for (final Future<Integer> future : futures) {
                 try {
-                    totalOccurrences += future.get();
+                    occur += future.get();
                 } catch (InterruptedException | ExecutionException e) {
                     System.err.println("Error processing a task: " + e.getMessage());
                 }
@@ -149,7 +168,7 @@ public class Main {
             }
         }
 
-        return totalOccurrences;
+        return occur;
     }
 
     public static int countWordParallelGPU(String filePath, String targetWord) {
@@ -162,6 +181,10 @@ public class Main {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());
             return -1;
         }
+
+        // Converte tudo para minúsculas para case-insensitive
+        text = text.toLowerCase();
+        targetWord = targetWord.toLowerCase();
 
         byte[] textBytes = text.getBytes();
         byte[] wordBytes = targetWord.getBytes();
@@ -186,7 +209,7 @@ public class Main {
 
         cl_program program = clCreateProgramWithSource(context, 1, new String[] { kernelSource }, null, null);
         clBuildProgram(program, 0, null, null, null, null);
-        cl_kernel kernel = clCreateKernel(program, "countWord", null);
+        cl_kernel kernel = clCreateKernel(program, "counter", null);
 
         cl_mem textBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                 Sizeof.cl_char * textBytes.length, Pointer.to(textBytes), null);
@@ -207,8 +230,8 @@ public class Main {
                 Pointer.to(occurrences), 0, null, null);
 
         int totalOccurrences = 0;
-        for (int count : occurrences) {
-            totalOccurrences += count;
+        for (int c : occurrences) {
+            totalOccurrences += c;
         }
 
         clReleaseMemObject(textBuffer);
@@ -222,16 +245,13 @@ public class Main {
         return totalOccurrences;
     }
 
-    private static void writeResultsToCSV(String filePath, List<String[]> data) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
-            // Cabeçalho
-            writer.println("Amostra,Metodo,Ocorrencias,Tempo(ms)");
-
-            // Dados
-            for (String[] result : data) {
+    private static void resultsToCSV(final String filePath, final List<List<String>> data) {
+        try (final PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+            writer.println("Arquivo,Metodo,Ocorrências,Tempo de Execução (ms)");
+            for (final List<String> result : data) {
                 writer.println(String.join(",", result));
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             System.err.println("Erro ao escrever no arquivo CSV: " + e.getMessage());
         }
     }

@@ -1,26 +1,45 @@
-__kernel void countWord(
-    __global const char *text,
-    __global const char *word,
-    __global int *occurrences,
-    const int textLength,
-    const int wordLength) {
-    
-    int id = get_global_id(0); // ID único da thread
-    int count = 0;
+__kernel void counter(__global const char* text,
+                        __global const char* word,
+                        __global int* occurrences,
+                        const int textLength,
+                        const int wordLength)
+{
+    int i = get_global_id(0);
 
-    // Comparar a palavra no intervalo do texto
-    for (int i = id; i < textLength - wordLength + 1; i += get_global_size(0)) {
-        int match = 1;
-        for (int j = 0; j < wordLength; j++) {
-            if (text[i + j] != word[j]) {
-                match = 0;
-                break;
-            }
-        }
-        if (match) {
-            count++;
+    // Se não cabe a palavra inteira a partir deste índice
+    if (i + wordLength > textLength) {
+        occurrences[i] = 0;
+        return;
+    }
+
+    // Verifica se corresponde exatamente a "AND"
+    for (int j = 0; j < wordLength; j++) {
+        if (text[i + j] != word[j]) {
+            occurrences[i] = 0;
+            return;
         }
     }
 
-    occurrences[id] = count;
+    // Agora verifica as fronteiras.
+    // Queremos garantir que antes e depois não haja [A-Za-z].
+    // Verifica caractere anterior
+    if (i > 0) {
+        char cLeft = text[i - 1];
+        if ((cLeft >= 'A' && cLeft <= 'Z') || (cLeft >= 'a' && cLeft <= 'z')) {
+            occurrences[i] = 0;
+            return;
+        }
+    }
+
+    // Verifica caractere posterior
+    int rightIndex = i + wordLength;
+    if (rightIndex < textLength) {
+        char cRight = text[rightIndex];
+        if ((cRight >= 'A' && cRight <= 'Z') || (cRight >= 'a' && cRight <= 'z')) {
+            occurrences[i] = 0;
+            return;
+        }
+    }
+
+    occurrences[i] = 1;
 }
