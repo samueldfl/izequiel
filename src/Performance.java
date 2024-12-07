@@ -32,7 +32,7 @@ public class Performance extends JPanel {
         int sampleSpacing = (width - 2 * padding) / numSamples;
         double timeScalingFactor = (double) (height - 2 * padding) / maxTime;
 
-        Color[] barColors = {Color.RED, Color.BLUE, Color.GREEN};
+        Color[] barColors = { Color.RED, Color.BLUE, Color.GREEN };
         int barPositionX = padding;
 
         for (String sample : performanceData.keySet()) {
@@ -70,7 +70,7 @@ public class Performance extends JPanel {
         g2d.drawString(chartTitle, width / 2 - g2d.getFontMetrics().stringWidth(chartTitle) / 2, padding / 2);
 
         int legendPositionY = padding + 30;
-        String[] methods = {"SerialCPU", "ParallelCPU", "ParallelGPU"};
+        String[] methods = { "SerialCPU", "ParallelCPU", "ParallelGPU" };
         for (int i = 0; i < methods.length; i++) {
             g2d.setColor(barColors[i % barColors.length]);
             g2d.fillRect(padding, legendPositionY + (i * 20), 15, 15);
@@ -80,7 +80,8 @@ public class Performance extends JPanel {
 
         g2d.drawString("Samples", width / 2 - g2d.getFontMetrics().stringWidth("Samples") / 2, height - padding + 40);
         g2d.rotate(-Math.PI / 2);
-        g2d.drawString("Execution Time (ms)", -height / 2 - g2d.getFontMetrics().stringWidth("Execution Time (ms)") / 2, padding - 20);
+        g2d.drawString("Execution Time (ms)", -height / 2 - g2d.getFontMetrics().stringWidth("Execution Time (ms)") / 2,
+                padding - 20);
         g2d.rotate(Math.PI / 2);
     }
 
@@ -92,7 +93,8 @@ public class Performance extends JPanel {
 
             while ((line = reader.readLine()) != null) {
                 String[] values = line.split(",");
-                if (values.length < 4) continue;
+                if (values.length < 4)
+                    continue;
 
                 String method = values[0].trim();
                 String sample = values[1].trim();
@@ -107,7 +109,7 @@ public class Performance extends JPanel {
     }
 
     public static void main(String[] args) {
-        String csvFilePath = "results.csv";
+        String csvFilePath = "./resources/results.csv";
         Map<String, Map<String, Long>> performanceData = parseCSV(csvFilePath);
 
         JFrame frame = new JFrame("Performance Comparison");

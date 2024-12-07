@@ -182,7 +182,6 @@ public class Main {
             return -1;
         }
 
-        // Converte tudo para minúsculas para case-insensitive
         text = text.toLowerCase();
         targetWord = targetWord.toLowerCase();
 

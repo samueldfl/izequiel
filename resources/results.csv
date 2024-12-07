@@ -1,10 +1,10 @@
 Arquivo,Metodo,Ocorrências,Tempo de Execução (ms)
-SerialCPU,DonQuixote-388208.txt,74,77
-ParallelCPU,DonQuixote-388208.txt,74,84
-ParallelGPU,DonQuixote-388208.txt,74,216
-SerialCPU,Dracula-165307.txt,5974,12
-ParallelCPU,Dracula-165307.txt,5974,11
-ParallelGPU,Dracula-165307.txt,5974,94
-SerialCPU,MobyDick-217452.txt,6514,19
-ParallelCPU,MobyDick-217452.txt,6514,13
-ParallelGPU,MobyDick-217452.txt,6514,103
+SerialCPU,DonQuixote-388208.txt,74,91
+ParallelCPU,DonQuixote-388208.txt,74,91
+ParallelGPU,DonQuixote-388208.txt,74,416
+SerialCPU,Dracula-165307.txt,5974,19
+ParallelCPU,Dracula-165307.txt,5974,14
+ParallelGPU,Dracula-165307.txt,5974,109
+SerialCPU,MobyDick-217452.txt,6514,27
+ParallelCPU,MobyDick-217452.txt,6514,15
+ParallelGPU,MobyDick-217452.txt,6514,108
