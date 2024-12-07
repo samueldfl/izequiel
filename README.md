@@ -28,8 +28,8 @@ Três métodos foram desenvolvidos:
 2. **ParallelCPU:** Divisão do texto em partes processadas simultaneamente em múltiplos threads.
 3. **ParallelGPU:** Processamento paralelo utilizando GPU via OpenCL.
 
-### Framework de Testes
-Foi desenvolvido um framework em Java para executar os testes de forma automatizada, registrando tempos de execução e resultados em arquivos CSV.
+### Testes
+Foi utilizado o metodo currentTimeMillis, em Java, registrando tempos de execução e resultados em arquivos CSV.
 
 ### Execução em Ambientes Variados
 - Foram utilizados textos de diferentes tamanhos e complexidades:
